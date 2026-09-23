@@ -8,12 +8,7 @@ tileset, script and three panels.
 
 ## Play it
 
-Any HTTPS host that sends CORS headers will do. With this repository on
-GitHub Pages:
-
-```
-https://play.workadventu.re/_/global/<pages-host>/office.tmj
-```
+**https://play.workadventu.re/_/global/fdlink.github.io/fd-office-map/office.tmj**
 
 Locally:
 
