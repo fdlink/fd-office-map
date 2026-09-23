@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Door</title>
+  <style>
+    body { font: 15px/1.4 system-ui, sans-serif; background: #161d2e; color: #e8ecf4; margin: 0; padding: 20px; }
+    h1 { font-size: 18px; margin: 0 0 8px; }
+    p { color: #8b95a8; font-size: 13px; margin: 0 0 14px; }
+    label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8b95a8; margin: 10px 0 4px; }
+    textarea { width: 100%; min-height: 80px; box-sizing: border-box; background: #0e1320; color: #e8ecf4; border: 1px solid #2c3650; border-radius: 8px; padding: 10px; font: inherit; }
+    .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    button { border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+    .primary { background: #e2b25c; color: #0e1320; }
+    .ghost { background: transparent; color: #8b95a8; border: 1px solid #2c3650; }
+  </style>
+  <script src="https://play.workadventu.re/iframe_api.js"></script>
+</head>
+<body>
+  <h1>Door — close the day</h1>
+  <p>One line. This is the save. Walking out is the ceremony.</p>
+  <label>What shipped</label>
+  <textarea id="line" placeholder="Shipped the Stage 0 map"></textarea>
+  <div class="row">
+    <button type="button" class="ghost" id="cancel">Not yet</button>
+    <button type="button" class="primary" id="go">Walk out</button>
+  </div>
+  <script>
+    function todayKey() {
+      const d = new Date();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return d.getFullYear() + "-" + m + "-" + day;
+    }
+    WA.onInit().then(function () {
+      if (WA.player.state.closeLine && WA.player.state.closedDay === todayKey()) {
+        document.getElementById("line").value = WA.player.state.closeLine;
+      }
+    });
+    document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
+    document.getElementById("go").onclick = function () {
+      const line = document.getElementById("line").value.trim();
+      if (!line) { document.getElementById("line").focus(); return; }
+      const day = todayKey();
+      WA.player.state.saveVariable("closeLine", line, { public: true, persist: true });
+      WA.player.state.saveVariable("closedDay", day, { public: false, persist: true });
+      WA.player.state.saveVariable("left", true, { public: true, persist: true });
+      WA.player.state.saveVariable("onNow", "", { public: true, persist: true });
+      WA.player.state.saveVariable("scene", "", { public: true, persist: true });
+      WA.chat.sendChatMessage("door · " + line, "FD Office");
+      WA.ui.modal.closeModal();
+    };
+  </script>
+</body>
+</html>

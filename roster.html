@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>On the floor</title>
+  <style>
+    body { font: 15px/1.45 system-ui, sans-serif; background: #161d2e; color: #e8ecf4; margin: 0; padding: 20px; }
+    ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    li { border-left: 3px solid #2c3650; padding-left: 10px; }
+    strong { font-weight: 600; }
+    .foot { color: #8b95a8; font-size: 12px; margin-top: 16px; border-top: 1px solid #2c3650; padding-top: 10px; }
+    button { border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; font-weight: 600; cursor: pointer; background: #8aaaee; color: #0e1320; margin-top: 12px; }
+  </style>
+  <script src="https://play.workadventu.re/iframe_api.js"></script>
+</head>
+<body>
+  <div id="out">Loading the floor…</div>
+  <button type="button" id="export">Export Gate A log</button>
+  <script>
+    var GLYPH = { deep: "◇", fire: "△", calm: "○", build: "□" };
+    function esc(s) { return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function todayKey() {
+      var d = new Date(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");
+      return d.getFullYear() + "-" + m + "-" + day;
+    }
+    function readLog() {
+      try {
+        var raw = WA.state.loadVariable("gateA");
+        if (!raw) return [];
+        return typeof raw === "string" ? JSON.parse(raw) : raw;
+      } catch (e) { return []; }
+    }
+    function card(name, st) {
+      var hidden = st.hidden === true || st.hidden === "true";
+      return {
+        name: name || "Someone",
+        onNow: hidden ? "" : (st.onNow || ""),
+        scene: hidden ? "" : (st.scene || ""),
+        closeLine: st.closedDay === todayKey() ? (st.closeLine || "") : (st.closeLine || "")
+      };
+    }
+    function render() {
+      var rows = [card(WA.player.name, WA.player.state)];
+      try {
+        WA.players.list().forEach(function (p) { rows.push(card(p.name, p.state)); });
+      } catch (e) { /* tracking may be off */ }
+      var html = "<ul>" + rows.map(function (r) {
+        var g = r.scene && GLYPH[r.scene] ? GLYPH[r.scene] + " " : "";
+        var line = r.closeLine
+          ? '<span style="color:#e2b25c">closed · ' + esc(r.closeLine) + "</span>"
+          : r.onNow ? esc(r.onNow) : '<span style="color:#8b95a8">no card yet</span>';
+        return "<li><strong>" + g + esc(r.name) + "</strong><br>" + line + "</li>";
+      }).join("") + "</ul>";
+      var log = readLog(), today = todayKey();
+      var both = log.filter(function (r) { return r.day === today && r.arrived && r.closed; }).length;
+      html += '<p class="foot">Today ' + both + " closed the day · " + log.length +
+              " rows in the shared log.<br>Presence is not productivity.</p>";
+      document.getElementById("out").innerHTML = html;
+    }
+    WA.onInit().then(function () {
+      try { WA.players.configureTracking({ players: true, movement: false }); } catch (e) {}
+      render();
+      setInterval(render, 2000);
+      document.getElementById("export").onclick = function () {
+        var blob = new Blob([JSON.stringify({ exported: new Date().toISOString(), source: "workadventure stage 0", log: readLog() }, null, 2)], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "fd-office-gate-a-" + todayKey() + ".json";
+        a.click();
+      };
+    });
+  </script>
+</body>
+</html>
