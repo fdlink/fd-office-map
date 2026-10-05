@@ -26,10 +26,15 @@ WorkAdventure fetches the map cross-origin, so a plain static server without
 |---|---|
 | `office.tmj` / `office.json` | The map. Generated — edit the geometry spec, not this. |
 | `office-tiles.png` | 32px tileset |
-| `script.js` | SPACE to sit or close. Walking past a desk opens nothing. |
-| `sit.html` | Your card: scene, what you are on, what is next, and hide |
-| `door.html` | One line about what shipped |
-| `roster.html` | Who is on the floor, their cards, and the shared day log |
+| `script.js` | SPACE to sit, close, pin, look out. Walking past a desk opens nothing. |
+| `loop.js` | Shared loop rules with the rehearsal (Gate A, notes, daily surprise). |
+| `sit.html` | Your card: desk mark, scene, on now, next (optional publish), hide |
+| `door.html` | One line about what shipped, optional line for someone |
+| `board.html` | Typed notes the floor can see (left board) |
+| `roster.html` | Who is on the floor (right board) and Gate A export |
+| `cafe.html` | Napkin + a line the floor can hear |
+| `sill.html` | Today's view from the light well |
+| `say.html` | Menu: say something |
 
 Walk up to someone in the Café and WorkAdventure opens a camera bubble. Walk into **Meeting** and SPACE joins a Jitsi room (camera + screen share). Recording is not on this host — that waits for Stage 2 LiveKit.
 

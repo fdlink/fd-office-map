@@ -11,7 +11,7 @@
   "type": "map",
   "version": "1.10",
   "nextlayerid": 7,
-  "nextobjectid": 34,
+  "nextobjectid": 36,
   "properties": [
     {
       "name": "script",
@@ -2032,6 +2032,17 @@
           "width": 64,
           "height": 64,
           "properties": []
+        },
+        {
+          "id": 33,
+          "name": "sill",
+          "type": "area",
+          "class": "area",
+          "x": 448,
+          "y": 32,
+          "width": 128,
+          "height": 64,
+          "properties": []
         }
       ],
       "opacity": 1,
@@ -2086,6 +2097,60 @@
               "name": "default",
               "type": "string",
               "value": "[]"
+            },
+            {
+              "name": "persist",
+              "type": "bool",
+              "value": true
+            },
+            {
+              "name": "public",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 34,
+          "name": "napkins",
+          "type": "variable",
+          "class": "variable",
+          "x": 64,
+          "y": 0,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "default",
+              "type": "string",
+              "value": "[]"
+            },
+            {
+              "name": "persist",
+              "type": "bool",
+              "value": true
+            },
+            {
+              "name": "public",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 35,
+          "name": "opener",
+          "type": "variable",
+          "class": "variable",
+          "x": 96,
+          "y": 0,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "default",
+              "type": "string",
+              "value": "{}"
             },
             {
               "name": "persist",

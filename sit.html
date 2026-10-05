@@ -3,23 +3,16 @@
 <head>
   <meta charset="utf-8">
   <title>Sit down</title>
-  <style>
-    body { font: 15px/1.4 system-ui, sans-serif; background: #161d2e; color: #e8ecf4; margin: 0; padding: 20px; }
-    h1 { font-size: 18px; margin: 0 0 8px; }
-    p { color: #8b95a8; font-size: 13px; margin: 0 0 14px; }
-    label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8b95a8; margin: 10px 0 4px; }
-    input, select { width: 100%; box-sizing: border-box; background: #0e1320; color: #e8ecf4; border: 1px solid #2c3650; border-radius: 8px; padding: 10px; font: inherit; }
-    input[type="checkbox"] { width: auto; }
-    .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
-    button { border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; font-weight: 600; cursor: pointer; }
-    .primary { background: #8aaaee; color: #0e1320; }
-    .ghost { background: transparent; color: #8b95a8; border: 1px solid #2c3650; }
-  </style>
+  <link rel="stylesheet" href="panel.css">
   <script src="https://play.workadventu.re/iframe_api.js"></script>
+  <script src="loop.js"></script>
 </head>
 <body>
   <h1>Sit down</h1>
-  <p>Scene + what you are on. Nobody else writes this.</p>
+  <p>Write what you are on. The scene is a mood; the sentence is yours.</p>
+  <p id="gift" class="gift"></p>
+  <label>Desk mark</label>
+  <input id="plaque" maxlength="16" placeholder="this desk today (optional)">
   <label>Scene</label>
   <select id="scene">
     <option value="deep">◇ Deep work</option>
@@ -28,42 +21,56 @@
     <option value="build">□ Building</option>
   </select>
   <label>On now</label>
-  <input id="onNow" placeholder="e.g. FD Office Stage 0">
+  <input id="onNow" maxlength="80" placeholder="e.g. FD Office Stage 0">
   <label>Next</label>
-  <input id="next" placeholder="optional">
+  <input id="next" maxlength="80" placeholder="optional">
+  <label><input type="checkbox" id="pubnext"> Show next on my desk</label>
   <label><input type="checkbox" id="hidden"> Hide status from others</label>
   <div class="row">
     <button type="button" class="ghost" id="cancel">Stay standing</button>
     <button type="button" class="primary" id="sit">Sit</button>
   </div>
   <script>
-    function todayKey() {
-      const d = new Date();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return d.getFullYear() + "-" + m + "-" + day;
+    var L = window.FdOfficeLoop;
+    function loadNotes() {
+      try { return L.parseJsonSafe(WA.state.loadVariable("boardNotes"), []); } catch (e) { return []; }
     }
     WA.onInit().then(function () {
-      if (WA.player.state.scene) document.getElementById("scene").value = WA.player.state.scene;
-      if (WA.player.state.onNow) document.getElementById("onNow").value = WA.player.state.onNow;
-      if (WA.player.state.next) document.getElementById("next").value = WA.player.state.next;
-      document.getElementById("hidden").checked = WA.player.state.hidden === true || WA.player.state.hidden === "true";
+      var st = WA.player.state;
+      if (st.scene) document.getElementById("scene").value = st.scene;
+      if (st.onNow) document.getElementById("onNow").value = st.onNow;
+      if (st.nextPrivate) document.getElementById("next").value = st.nextPrivate;
+      else if (st.next) document.getElementById("next").value = st.next;
+      if (st.plaque) document.getElementById("plaque").value = st.plaque;
+      document.getElementById("pubnext").checked = st.publishNext === true || st.publishNext === "true";
+      document.getElementById("hidden").checked = st.hidden === true || st.hidden === "true";
+      var mine = L.notesForYou(loadNotes(), WA.player.name || "");
+      if (mine.length) {
+        document.getElementById("gift").textContent = "On the board for you: " + mine[mine.length - 1].text;
+      }
     });
     document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
     document.getElementById("sit").onclick = function () {
-      const scene = document.getElementById("scene").value;
-      const onNow = document.getElementById("onNow").value.trim();
-      const next = document.getElementById("next").value.trim();
-      const hidden = document.getElementById("hidden").checked;
-      if (!hidden && !onNow) {
+      var onNow = L.clipLine(document.getElementById("onNow").value, 80);
+      var hidden = document.getElementById("hidden").checked;
+      var allowed = L.sitAllowed(WA.player.name || "You", onNow, hidden);
+      if (!allowed.ok) {
         document.getElementById("onNow").focus();
         return;
       }
-      WA.player.state.saveVariable("scene", hidden ? "" : scene, { public: true, persist: true });
-      WA.player.state.saveVariable("onNow", hidden ? "" : onNow, { public: true, persist: true });
-      WA.player.state.saveVariable("next", next, { public: false, persist: true });
+      var scene = document.getElementById("scene").value;
+      var next = L.clipLine(document.getElementById("next").value, 80);
+      var plaque = L.clipLine(document.getElementById("plaque").value, 16);
+      var publishNext = document.getElementById("pubnext").checked;
+      var card = L.publicCard(hidden, scene, onNow, next, publishNext);
+      WA.player.state.saveVariable("scene", card.scene, { public: true, persist: true });
+      WA.player.state.saveVariable("onNow", card.onNow, { public: true, persist: true });
+      WA.player.state.saveVariable("nextPrivate", next, { public: false, persist: true });
+      WA.player.state.saveVariable("next", card.next, { public: true, persist: true });
+      WA.player.state.saveVariable("publishNext", publishNext, { public: false, persist: true });
+      WA.player.state.saveVariable("plaque", plaque, { public: true, persist: true });
       WA.player.state.saveVariable("hidden", hidden, { public: false, persist: true });
-      WA.player.state.saveVariable("arrivedDay", todayKey(), { public: false, persist: true });
+      WA.player.state.saveVariable("arrivedDay", L.todayKey(), { public: false, persist: true });
       WA.player.state.saveVariable("left", false, { public: true, persist: true });
       WA.chat.sendChatMessage(hidden ? "sat down (hidden)" : ("sat down · " + scene + (onNow ? " · " + onNow : "")), "FD Office");
       WA.ui.modal.closeModal();

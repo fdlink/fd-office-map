@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Board</title>
+  <link rel="stylesheet" href="panel.css">
+  <script src="https://play.workadventu.re/iframe_api.js"></script>
+  <script src="loop.js"></script>
+</head>
+<body>
+  <h1>Board</h1>
+  <p>Write a note the floor can see. Address it if you want. Not a metric.</p>
+  <div id="for-you"></div>
+  <ul id="list"></ul>
+  <label>Note</label>
+  <input id="note" maxlength="80" placeholder="Nice close yesterday">
+  <label>For (optional)</label>
+  <input id="for" maxlength="24" placeholder="leave blank for everyone">
+  <div class="row">
+    <button type="button" class="ghost" id="cancel">Leave it</button>
+    <button type="button" class="primary" id="pin">Pin</button>
+  </div>
+  <script>
+    var L = window.FdOfficeLoop;
+    function esc(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function readNotes() {
+      try {
+        return L.parseJsonSafe(WA.state.loadVariable("boardNotes"), []);
+      } catch (e) { return []; }
+    }
+    function writeNotes(notes) {
+      try { WA.state.saveVariable("boardNotes", JSON.stringify(notes)); } catch (e) {}
+    }
+    function render() {
+      var notes = readNotes();
+      var me = WA.player.name || "";
+      var mine = L.notesForYou(notes, me);
+      var box = document.getElementById("for-you");
+      box.innerHTML = mine.length
+        ? '<p class="gift">For you: ' + esc(mine[mine.length - 1].text) + "</p>"
+        : "";
+      document.getElementById("list").innerHTML = notes.slice(-8).map(function (n) {
+        var to = n.forWhom ? " → " + esc(n.forWhom) : "";
+        var kind = n.kind === "gift" ? " gift" : "";
+        return "<li class='" + kind + "'><strong>" + esc(n.name) + to + "</strong> — " + esc(n.text) + "</li>";
+      }).join("") || "<li>Empty. First note sets the tone.</li>";
+    }
+    WA.onInit().then(function () {
+      render();
+      document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
+      document.getElementById("pin").onclick = function () {
+        var text = L.clipLine(document.getElementById("note").value, 80);
+        if (!text) { document.getElementById("note").focus(); return; }
+        writeNotes(L.pinNote(readNotes(), {
+          day: L.todayKey(),
+          name: WA.player.name || "Someone",
+          text: text,
+          forWhom: document.getElementById("for").value,
+          kind: "board"
+        }));
+        WA.ui.modal.closeModal();
+      };
+    });
+  </script>
+</body>
+</html>

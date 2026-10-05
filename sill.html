@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Look out</title>
+  <link rel="stylesheet" href="panel.css">
+  <script src="https://play.workadventu.re/iframe_api.js"></script>
+  <script src="loop.js"></script>
+</head>
+<body>
+  <h1>Look out</h1>
+  <p id="sill-line">The view changes with the day.</p>
+  <img class="sill" src="sill-view.jpg" alt="The view from the sill">
+  <p id="floor-line"></p>
+  <div class="row">
+    <button type="button" class="primary" id="ok">Back to the floor</button>
+  </div>
+  <script>
+    var L = window.FdOfficeLoop;
+    WA.onInit().then(function () {
+      var surprise = L.surpriseForDay(L.todayKey());
+      document.getElementById("sill-line").textContent = surprise.sill;
+      document.getElementById("floor-line").textContent = surprise.line;
+      document.getElementById("ok").onclick = function () { WA.ui.modal.closeModal(); };
+    });
+  </script>
+</body>
+</html>

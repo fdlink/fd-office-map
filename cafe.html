@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Café</title>
+  <link rel="stylesheet" href="panel.css">
+  <script src="https://play.workadventu.re/iframe_api.js"></script>
+  <script src="loop.js"></script>
+</head>
+<body>
+  <h1>Café</h1>
+  <p id="who">Walk up to talk. Leave a napkin if you like.</p>
+  <ul id="list"></ul>
+  <label>Napkin</label>
+  <input id="napkin" maxlength="80" placeholder="tea later?">
+  <label>Say something (optional)</label>
+  <input id="say" maxlength="40" placeholder="a line the floor will hear">
+  <div class="row">
+    <button type="button" class="ghost" id="cancel">Just standing</button>
+    <button type="button" class="primary" id="go">Leave it</button>
+  </div>
+  <script>
+    var L = window.FdOfficeLoop;
+    function esc(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function readNapkins() {
+      try { return L.parseJsonSafe(WA.state.loadVariable("napkins"), []); } catch (e) { return []; }
+    }
+    WA.onInit().then(function () {
+      var here = [];
+      try {
+        WA.players.list().forEach(function (p) {
+          if (p.state.inCafe === true || p.state.inCafe === "true") here.push(p.name || "Someone");
+        });
+      } catch (e) {}
+      document.getElementById("who").textContent = here.length
+        ? "You are here with " + here.join(", ") + "."
+        : "Walk up to talk. Leave a napkin if you like.";
+      var notes = readNapkins();
+      document.getElementById("list").innerHTML = notes.slice(-6).map(function (n) {
+        return "<li><strong>" + esc(n.name) + "</strong> — " + esc(n.text) + "</li>";
+      }).join("") || "<li>The table is empty.</li>";
+      document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
+      document.getElementById("go").onclick = function () {
+        var text = L.clipLine(document.getElementById("napkin").value, 80);
+        if (text) {
+          try {
+            WA.state.saveVariable("napkins", JSON.stringify(L.pinNote(readNapkins(), {
+              day: L.todayKey(),
+              name: WA.player.name || "Someone",
+              text: text,
+              kind: "napkin"
+            })));
+          } catch (e) {}
+        }
+        var bubble = L.sayBubble(WA.player.name, document.getElementById("say").value, Date.now());
+        if (bubble) {
+          try {
+            WA.player.state.saveVariable("say", bubble.text, { public: true, persist: false });
+            WA.chat.sendChatMessage(bubble.text, WA.player.name || "Someone");
+          } catch (e) {}
+        }
+        WA.ui.modal.closeModal();
+      };
+    });
+  </script>
+</body>
+</html>

@@ -1,19 +1,12 @@
 /// <reference types="@workadventure/iframe-api-typings" />
 /**
  * FD Office Stage 0 — WorkAdventure map script.
- * SPACE to sit / close. Do not auto-open a modal on walk-through.
+ * SPACE to sit / close / pin / look out. Do not auto-open a modal on walk-through.
  * Charter: nothing above your head you did not type. Hide clears public state.
  *
- * v2 (2026-09-23, Claude QA pass). v1 shipped three things that made the crew
- * test impossible, all fixed here:
- *   - the typed card was saved public but nothing ever rendered it, so no one
- *     could see what anyone was on. Now: a roster panel + a live feed.
- *   - WA.chat.sendChatMessage only writes to your own chat, so "sat down"
- *     reached nobody. Now: everyone reacts to public variable changes.
- *   - Gate A lived in a private per-player variable, so it could never be
- *     added up. Now: one shared room variable anybody can export.
- * Every WA call is wrapped, because the public play server's API version is
- * not ours to pin.
+ * 357 (2026-10-05): board notes are written (CD3), café napkins + say (CD5),
+ * sill view seeded by the day (CD7). Gate A scoring lives in loop.js so the
+ * rehearsal and this map cannot disagree. Every WA call is wrapped.
  */
 
 var DESKS = [
@@ -43,27 +36,34 @@ function say(line) {
     });
 }
 
+function parseJsonSafe(raw, fallback) {
+    if (raw == null || raw === "") return fallback;
+    if (typeof raw !== "string") return raw;
+    try {
+        return JSON.parse(raw);
+    } catch (err) {
+        return fallback;
+    }
+}
+
 /* ---------- shared Gate A log (room variable, declared in office.tmj) ---------- */
 
 function readRoom(key) {
     return safe(function () {
-        var raw = WA.state.loadVariable(key);
-        if (!raw) return [];
-        return typeof raw === "string" ? JSON.parse(raw) : raw;
+        return parseJsonSafe(WA.state.loadVariable(key), []);
     }, []);
 }
 
 function writeRoom(key, value) {
     return safe(function () {
-        WA.state.saveVariable(key, JSON.stringify(value));
+        WA.state.saveVariable(key, typeof value === "string" ? value : JSON.stringify(value));
         return true;
     }, false);
 }
 
-/* One row per person per day, same shape as the rehearsal export and
-   gate-a.schema.json. Re-sitting must not create a second row. */
 function recordGateA(entry) {
     var log = readRoom("gateA");
+    if (!Array.isArray(log)) log = [];
     var found = -1;
     for (var i = 0; i < log.length; i++) {
         if (log[i].day === entry.day && log[i].name === entry.name) {
@@ -85,7 +85,6 @@ function recordGateA(entry) {
     }
     var ok = writeRoom("gateA", log);
     if (!ok) {
-        /* Room variables refused: keep a local copy so the day is not lost. */
         safe(function () {
             WA.player.state.saveVariable("gateAFallback", JSON.stringify(log), {
                 public: false,
@@ -94,6 +93,17 @@ function recordGateA(entry) {
         });
     }
     return ok;
+}
+
+function recordOpener(name) {
+    var today = todayKey();
+    var current = safe(function () {
+        return parseJsonSafe(WA.state.loadVariable("opener"), {});
+    }, {});
+    if (current && current.day === today && current.name) return current;
+    var next = { day: today, name: name || "" };
+    writeRoom("opener", next);
+    return next;
 }
 
 /* ---------- who is here and what they typed ---------- */
@@ -137,11 +147,11 @@ function rosterHtml() {
             : r.onNow
                 ? esc(r.onNow)
                 : '<em style="color:#8b95a8">no card yet</em>';
-        return '<li><strong>' + glyph + esc(r.name) + "</strong><br>" + line + "</li>";
+        return "<li><strong>" + glyph + esc(r.name) + "</strong><br>" + line + "</li>";
     });
     var log = readRoom("gateA");
     var today = todayKey();
-    var both = log.filter(function (r) {
+    var both = (Array.isArray(log) ? log : []).filter(function (r) {
         return r.day === today && r.arrived && r.closed;
     }).length;
     return (
@@ -189,14 +199,29 @@ function openModal(title, src) {
     });
 }
 
+function setZoneFlag(key, on) {
+    safe(function () {
+        WA.player.state.saveVariable(key, !!on, { public: true, persist: false });
+    });
+}
+
+function othersIn(flag) {
+    var n = 0;
+    safe(function () {
+        WA.players.list().forEach(function (p) {
+            if (p.state[flag] === true || p.state[flag] === "true") n += 1;
+        });
+    });
+    return n;
+}
+
 WA.onInit().then(function () {
-    /* Without tracking, everyone else's card is invisible — the v1 bug. */
     safe(function () {
         WA.players.configureTracking({ players: true, movement: false });
     });
 
     DESKS.forEach(function (areaName) {
-        bindAction(areaName, "SPACE — sit down (scene + on now)", function () {
+        bindAction(areaName, "SPACE — sit down (write what you are on)", function () {
             openModal("Sit down", "./sit.html");
         });
     });
@@ -205,27 +230,59 @@ WA.onInit().then(function () {
         openModal("Door", "./door.html");
     });
 
-    ["board-l", "board-r"].forEach(function (areaName) {
-        bindAction(areaName, "SPACE — who is on the floor", function () {
-            openModal("On the floor", "./roster.html");
-        });
+    bindAction("board-l", "SPACE — leave a note", function () {
+        openModal("Board", "./board.html");
+    });
+    bindAction("board-r", "SPACE — who is on the floor", function () {
+        openModal("On the floor", "./roster.html");
+    });
+    bindAction("sill", "SPACE — look out", function () {
+        openModal("Look out", "./sill.html");
     });
 
-    ["cafe", "meeting"].forEach(function (areaName) {
-        safe(function () {
-            WA.room.area.onEnter(areaName).subscribe(function () {
-                WA.ui.displayActionMessage({
-                    message: areaName === "cafe"
-                        ? "Café — walk up to talk (camera opens when you are close)"
-                        : "Meeting — SPACE for a room with screen share",
-                    callback: function () {}
-                });
+    var cafeAction;
+    safe(function () {
+        WA.room.area.onEnter("cafe").subscribe(function () {
+            setZoneFlag("inCafe", true);
+            var withYou = othersIn("inCafe");
+            if (cafeAction && cafeAction.remove) cafeAction.remove();
+            cafeAction = WA.ui.displayActionMessage({
+                message: withYou
+                    ? "Café — you are here with others. SPACE leaves a napkin"
+                    : "Café — walk up to talk. SPACE leaves a napkin",
+                callback: function () { openModal("Café", "./cafe.html"); }
             });
         });
+        WA.room.area.onLeave("cafe").subscribe(function () {
+            setZoneFlag("inCafe", false);
+            if (cafeAction && cafeAction.remove) cafeAction.remove();
+            cafeAction = undefined;
+        });
     });
 
-    /* A card someone else typed should land on your screen without you
-       walking over to read it. */
+    var meetAction;
+    safe(function () {
+        WA.room.area.onEnter("meeting").subscribe(function () {
+            setZoneFlag("inMeeting", true);
+            if (meetAction && meetAction.remove) meetAction.remove();
+            meetAction = WA.ui.displayActionMessage({
+                message: "Meeting — SPACE for a room with screen share",
+                callback: function () {}
+            });
+        });
+        WA.room.area.onLeave("meeting").subscribe(function () {
+            setZoneFlag("inMeeting", false);
+            if (meetAction && meetAction.remove) meetAction.remove();
+            meetAction = undefined;
+        });
+    });
+
+    safe(function () {
+        WA.ui.registerMenuCommand("Say something", {
+            callback: function () { openModal("Say something", "./say.html"); }
+        });
+    });
+
     safe(function () {
         WA.players.onPlayerEnters.subscribe(function (p) {
             say(p.name + " is on the floor");
@@ -237,6 +294,10 @@ WA.onInit().then(function () {
             var who = evt.player && evt.player.name ? evt.player.name : "Someone";
             if (evt.key === "onNow" && evt.value) say(who + " · on now: " + evt.value);
             if (evt.key === "closeLine" && evt.value) say(who + " closed · " + evt.value);
+            if (evt.key === "say" && evt.value) say(who + ": " + evt.value);
+            if (evt.key === "inCafe" && (evt.value === true || evt.value === "true")) {
+                say(who + " is in the café");
+            }
         });
     });
 
@@ -244,10 +305,10 @@ WA.onInit().then(function () {
         var st = WA.player.state;
         var hidden = st.hidden === true || st.hidden === "true";
         var today = todayKey();
-        /* Hide wins over anything typed earlier in the session. */
         safe(function () {
             st.saveVariable("onNow", hidden ? "" : (st.onNow || ""), { public: true, persist: true });
             st.saveVariable("scene", hidden ? "" : (st.scene || ""), { public: true, persist: true });
+            st.saveVariable("next", hidden ? "" : (st.next || ""), { public: true, persist: true });
         });
         var arrived = st.arrivedDay === today;
         var closed = st.closedDay === today;
@@ -260,9 +321,18 @@ WA.onInit().then(function () {
                 closeLine: closed ? (st.closeLine || "") : ""
             });
         }
+        if (arrived) {
+            var opened = recordOpener(WA.player.name || "");
+            if (opened && opened.name === (WA.player.name || "") && st.heardOpenerDay !== today) {
+                say(opened.name + " opened the office");
+                safe(function () {
+                    st.saveVariable("heardOpenerDay", today, { public: false, persist: true });
+                });
+            }
+        }
     });
 
-    say("FD Office — walk to a desk, SPACE to sit. Board shows who is here.");
+    say("FD Office — walk to a desk, SPACE to sit. The sill looks out. Left board is notes.");
 
     safe(function () {
         if (!WA.player.state.seenHowTo) {

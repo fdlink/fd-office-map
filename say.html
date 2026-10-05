@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Say something</title>
+  <link rel="stylesheet" href="panel.css">
+  <script src="https://play.workadventu.re/iframe_api.js"></script>
+  <script src="loop.js"></script>
+</head>
+<body>
+  <h1>Say something</h1>
+  <p>A line the floor will hear. You write it.</p>
+  <label>Line</label>
+  <input id="say" maxlength="40" placeholder="good close yesterday">
+  <div class="row">
+    <button type="button" class="ghost" id="cancel">Never mind</button>
+    <button type="button" class="primary" id="go">Say it</button>
+  </div>
+  <script>
+    var L = window.FdOfficeLoop;
+    WA.onInit().then(function () {
+      document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
+      document.getElementById("go").onclick = function () {
+        var bubble = L.sayBubble(WA.player.name, document.getElementById("say").value, Date.now());
+        if (!bubble) { document.getElementById("say").focus(); return; }
+        try {
+          WA.player.state.saveVariable("say", bubble.text, { public: true, persist: false });
+          WA.chat.sendChatMessage(bubble.text, WA.player.name || "Someone");
+        } catch (e) {}
+        WA.ui.modal.closeModal();
+      };
+    });
+  </script>
+</body>
+</html>
