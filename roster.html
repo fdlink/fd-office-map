@@ -53,8 +53,43 @@
       }).join("") + "</ul>";
       var log = readLog(), today = todayKey();
       var both = log.filter(function (r) { return r.day === today && r.arrived && r.closed; }).length;
-      html += '<p class="foot">Today ' + both + " closed the day · " + log.length +
-              " rows in the shared log.<br>Presence is not productivity.</p>";
+      var names = {};
+      log.forEach(function (r) { if (r.name) names[r.name] = true; });
+      var crew = Math.max(1, Object.keys(names).length);
+      var need = Math.ceil(crew * 0.6);
+      var weekdays = [];
+      (function () {
+        var key = today, guard = 0;
+        function shift(k, dlt) {
+          var p = k.split("-").map(Number);
+          var dt = new Date(p[0], p[1] - 1, p[2] + dlt);
+          var m = String(dt.getMonth() + 1).padStart(2, "0");
+          var day = String(dt.getDate()).padStart(2, "0");
+          return dt.getFullYear() + "-" + m + "-" + day;
+        }
+        while (weekdays.length < 10 && guard < 40) {
+          var p = key.split("-").map(Number);
+          var dow = new Date(p[0], p[1] - 1, p[2]).getDay();
+          if (dow !== 0 && dow !== 6) weekdays.unshift(key);
+          key = shift(key, -1);
+          guard += 1;
+        }
+      })();
+      var passed = 0;
+      weekdays.forEach(function (day) {
+        var people = {};
+        log.forEach(function (r) {
+          if (r.day !== day) return;
+          people[r.name] = people[r.name] || { a: false, c: false };
+          people[r.name].a = people[r.name].a || !!r.arrived;
+          people[r.name].c = people[r.name].c || !!r.closed;
+        });
+        var n = Object.keys(people).filter(function (n) { return people[n].a && people[n].c; }).length;
+        if (n >= need) passed += 1;
+      });
+      html += '<p class="foot">Today ' + both + " closed the day · two-week Gate A " +
+              passed + "/8 weekdays (need 8 of 10, 60% of " + crew +
+              ").<br>Presence is not productivity.</p>";
       document.getElementById("out").innerHTML = html;
     }
     WA.onInit().then(function () {

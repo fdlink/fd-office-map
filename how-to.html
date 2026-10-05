@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>How the floor works</title>
+  <style>
+    body { font: 15px/1.45 system-ui, sans-serif; background: #161d2e; color: #e8ecf4; margin: 0; padding: 20px; }
+    h1 { font-size: 18px; margin: 0 0 10px; }
+    ol { margin: 0; padding-left: 18px; color: #e8ecf4; }
+    li { margin: 8px 0; }
+    p { color: #8b95a8; font-size: 13px; }
+    button { border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; font-weight: 600; cursor: pointer; background: #8aaaee; color: #0e1320; margin-top: 14px; }
+  </style>
+  <script src="https://play.workadventu.re/iframe_api.js"></script>
+</head>
+<body>
+  <h1>FD Office — four beats</h1>
+  <ol>
+    <li>Walk to a desk. <strong>SPACE</strong> sits you down. Type what you are on.</li>
+    <li>Walk up to someone in the Café — the camera opens when you are close.</li>
+    <li>Walk into Meeting. <strong>SPACE</strong> joins a room with screen share.</li>
+    <li>Walk to the threshold. <strong>SPACE</strong> — one line about what shipped. That is the save.</li>
+  </ol>
+  <p>Hide is always allowed. Nothing appears above your head that you did not type. Presence is not productivity.</p>
+  <p>The board shows who is here. Recording is not on this floor yet.</p>
+  <button type="button" id="go">Got it — walk in</button>
+  <script>
+    document.getElementById("go").onclick = function () {
+      try {
+        WA.player.state.saveVariable("seenHowTo", true, { public: false, persist: true });
+        WA.ui.modal.closeModal();
+      } catch (e) {
+        try { WA.ui.modal.closeModal(); } catch (err) {}
+      }
+    };
+  </script>
+</body>
+</html>

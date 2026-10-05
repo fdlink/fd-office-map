@@ -55,6 +55,10 @@
       const onNow = document.getElementById("onNow").value.trim();
       const next = document.getElementById("next").value.trim();
       const hidden = document.getElementById("hidden").checked;
+      if (!hidden && !onNow) {
+        document.getElementById("onNow").focus();
+        return;
+      }
       WA.player.state.saveVariable("scene", hidden ? "" : scene, { public: true, persist: true });
       WA.player.state.saveVariable("onNow", hidden ? "" : onNow, { public: true, persist: true });
       WA.player.state.saveVariable("next", next, { public: false, persist: true });

@@ -263,6 +263,12 @@ WA.onInit().then(function () {
     });
 
     say("FD Office — walk to a desk, SPACE to sit. Board shows who is here.");
+
+    safe(function () {
+        if (!WA.player.state.seenHowTo) {
+            openModal("How the floor works", "./how-to.html");
+        }
+    });
 }).catch(function (err) {
     console.error("FD Office map script failed to init", err);
 });
