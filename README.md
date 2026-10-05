@@ -31,6 +31,8 @@ WorkAdventure fetches the map cross-origin, so a plain static server without
 | `door.html` | One line about what shipped |
 | `roster.html` | Who is on the floor, their cards, and the shared day log |
 
+Walk up to someone in the Café and WorkAdventure opens a camera bubble. Walk into **Meeting** and SPACE joins a Jitsi room (camera + screen share). Recording is not on this host — that waits for Stage 2 LiveKit.
+
 ## The rules the map keeps
 
 1. Nothing appears above your head that you did not type.

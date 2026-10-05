@@ -216,8 +216,8 @@ WA.onInit().then(function () {
             WA.room.area.onEnter(areaName).subscribe(function () {
                 WA.ui.displayActionMessage({
                     message: areaName === "cafe"
-                        ? "Café — walk up to talk"
-                        : "Meeting — proximity huddle",
+                        ? "Café — walk up to talk (camera opens when you are close)"
+                        : "Meeting — SPACE for a room with screen share",
                     callback: function () {}
                 });
             });
