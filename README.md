@@ -33,10 +33,12 @@ WorkAdventure fetches the map cross-origin, so a plain static server without
 | `board.html` | Typed notes the floor can see (left board) |
 | `roster.html` | Who is on the floor (right board) and Gate A export |
 | `cafe.html` | Napkin + a line the floor can hear |
-| `sill.html` | Today's view from the light well |
+| `sill.html` | Today's view from the light well (a different painting each day) |
 | `say.html` | Menu: say something |
+| `meeting.html` | Menu: today's agenda (SPACE still opens Jitsi) |
+| `how-to.html` | First visit |
 
-Walk up to someone in the Café and WorkAdventure opens a camera bubble. Walk into **Meeting** and SPACE joins a Jitsi room (camera + screen share). Recording is not on this host — that waits for Stage 2 LiveKit.
+Walk up to someone in the Café and WorkAdventure opens a camera bubble. Walk into **Meeting** and SPACE joins a Jitsi room (camera + screen share). If a desk is already claimed, SPACE leaves a note instead of sitting. Recording is not on this host — that waits for Stage 2 LiveKit.
 
 ## The rules the map keeps
 

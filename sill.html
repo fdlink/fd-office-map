@@ -17,10 +17,14 @@
   </div>
   <script>
     var L = window.FdOfficeLoop;
+    if (L.bindEnterSubmit) L.bindEnterSubmit(document.body);
     WA.onInit().then(function () {
       var surprise = L.surpriseForDay(L.todayKey());
       document.getElementById("sill-line").textContent = surprise.sill;
       document.getElementById("floor-line").textContent = surprise.line;
+      var img = document.querySelector("img.sill");
+      img.src = L.sillArt(surprise);
+      img.onerror = function () { img.src = "sill-view.jpg"; };
       document.getElementById("ok").onclick = function () { WA.ui.modal.closeModal(); };
     });
   </script>

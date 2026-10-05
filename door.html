@@ -24,6 +24,7 @@
   </div>
   <script>
     var L = window.FdOfficeLoop;
+    if (L.bindEnterSubmit) L.bindEnterSubmit(document.body);
     function readLog() {
       try { return L.parseJsonSafe(WA.state.loadVariable("gateA"), []); } catch (e) { return []; }
     }

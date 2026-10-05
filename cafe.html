@@ -21,6 +21,7 @@
   </div>
   <script>
     var L = window.FdOfficeLoop;
+    if (L.bindEnterSubmit) L.bindEnterSubmit(document.body);
     function esc(s) {
       return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }

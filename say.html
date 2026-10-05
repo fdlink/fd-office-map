@@ -18,6 +18,7 @@
   </div>
   <script>
     var L = window.FdOfficeLoop;
+    if (L.bindEnterSubmit) L.bindEnterSubmit(document.body);
     WA.onInit().then(function () {
       document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
       document.getElementById("go").onclick = function () {

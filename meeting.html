@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Today's agenda</title>
+  <link rel="stylesheet" href="panel.css">
+  <script src="https://play.workadventu.re/iframe_api.js"></script>
+  <script src="loop.js"></script>
+</head>
+<body>
+  <h1>Today's agenda</h1>
+  <p id="who">Walk into Meeting. SPACE opens the room with screen share. The agenda is a line you write.</p>
+  <ul id="list"></ul>
+  <label>Agenda</label>
+  <input id="agenda" maxlength="80" placeholder="ship the loop, then lunch">
+  <div class="row">
+    <button type="button" class="ghost" id="cancel">Just standing</button>
+    <button type="button" class="primary" id="go">Leave it</button>
+  </div>
+  <script>
+    var L = window.FdOfficeLoop;
+    function esc(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function readAgenda() {
+      try { return L.parseJsonSafe(WA.state.loadVariable("agenda"), []); } catch (e) { return []; }
+    }
+    if (L.bindEnterSubmit) L.bindEnterSubmit(document.body);
+    WA.onInit().then(function () {
+      var here = [];
+      try {
+        WA.players.list().forEach(function (p) {
+          if (p.state.inMeeting === true || p.state.inMeeting === "true") here.push(p.name || "Someone");
+        });
+      } catch (e) {}
+      document.getElementById("who").textContent = here.length
+        ? "You are here with " + here.join(", ") + ". SPACE still opens the room."
+        : "Walk into Meeting. SPACE opens the room with screen share. The agenda is a line you write.";
+      var notes = readAgenda();
+      document.getElementById("list").innerHTML = notes.slice(-6).map(function (n) {
+        return "<li><strong>" + esc(n.name) + "</strong> — " + esc(n.text) + "</li>";
+      }).join("") || "<li>No agenda yet. First line sets it.</li>";
+      document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
+      document.getElementById("go").onclick = function () {
+        var item = L.agendaLine(WA.player.name || "Someone", document.getElementById("agenda").value, L.todayKey());
+        if (item) {
+          try { WA.state.saveVariable("agenda", JSON.stringify(L.pinNote(readAgenda(), item))); } catch (e) {}
+        }
+        WA.ui.modal.closeModal();
+      };
+    });
+  </script>
+</body>
+</html>

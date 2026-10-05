@@ -47,7 +47,16 @@
         return "<li class='" + kind + "'><strong>" + esc(n.name) + to + "</strong> — " + esc(n.text) + "</li>";
       }).join("") || "<li>Empty. First note sets the tone.</li>";
     }
+    if (L.bindEnterSubmit) L.bindEnterSubmit(document.body);
     WA.onInit().then(function () {
+      try {
+        var forWhom = WA.player.state.noteFor || "";
+        if (forWhom) {
+          document.getElementById("for").value = forWhom;
+          document.querySelector("h1").textContent = "A note for " + forWhom;
+          document.querySelector("p").textContent = "They already have this chair. Write them something. The chair stays theirs.";
+        }
+      } catch (e) {}
       render();
       document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
       document.getElementById("pin").onclick = function () {
@@ -58,8 +67,9 @@
           name: WA.player.name || "Someone",
           text: text,
           forWhom: document.getElementById("for").value,
-          kind: "board"
+          kind: document.getElementById("for").value ? "desk" : "board"
         }));
+        try { WA.player.state.saveVariable("noteFor", "", { public: false, persist: false }); } catch (e) {}
         WA.ui.modal.closeModal();
       };
     });

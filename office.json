@@ -2163,6 +2163,33 @@
               "value": true
             }
           ]
+        },
+        {
+          "id": 36,
+          "name": "agenda",
+          "type": "variable",
+          "class": "variable",
+          "x": 128,
+          "y": 0,
+          "width": 32,
+          "height": 32,
+          "properties": [
+            {
+              "name": "default",
+              "type": "string",
+              "value": "[]"
+            },
+            {
+              "name": "persist",
+              "type": "bool",
+              "value": true
+            },
+            {
+              "name": "public",
+              "type": "bool",
+              "value": true
+            }
+          ]
         }
       ],
       "opacity": 1,

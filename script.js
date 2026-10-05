@@ -215,16 +215,57 @@ function othersIn(flag) {
     return n;
 }
 
+function occupantOf(areaName) {
+    var found = null;
+    safe(function () {
+        WA.players.list().forEach(function (p) {
+            var left = p.state.left === true || p.state.left === "true";
+            if (!left && p.state.claimedDesk === areaName) found = p;
+        });
+    });
+    return found;
+}
+
+function bindDesk(areaName) {
+    var action;
+    safe(function () {
+        WA.room.area.onEnter(areaName).subscribe(function () {
+            if (action && action.remove) action.remove();
+            var occ = occupantOf(areaName);
+            var msg = occ
+                ? "SPACE — leave a note for " + (occ.name || "them")
+                : "SPACE — sit down (write what you are on)";
+            action = WA.ui.displayActionMessage({
+                message: msg,
+                callback: function () {
+                    var who = occupantOf(areaName);
+                    safe(function () {
+                        WA.player.state.saveVariable("pendingDesk", areaName, { public: false, persist: false });
+                    });
+                    if (who) {
+                        safe(function () {
+                            WA.player.state.saveVariable("noteFor", who.name || "", { public: false, persist: false });
+                        });
+                        openModal("A note for " + (who.name || "them"), "./board.html");
+                    } else {
+                        openModal("Sit down", "./sit.html");
+                    }
+                }
+            });
+        });
+        WA.room.area.onLeave(areaName).subscribe(function () {
+            if (action && action.remove) action.remove();
+            action = undefined;
+        });
+    });
+}
+
 WA.onInit().then(function () {
     safe(function () {
         WA.players.configureTracking({ players: true, movement: false });
     });
 
-    DESKS.forEach(function (areaName) {
-        bindAction(areaName, "SPACE — sit down (write what you are on)", function () {
-            openModal("Sit down", "./sit.html");
-        });
-    });
+    DESKS.forEach(bindDesk);
 
     bindAction("door", "SPACE — close the day", function () {
         openModal("Door", "./door.html");
@@ -260,26 +301,21 @@ WA.onInit().then(function () {
         });
     });
 
-    var meetAction;
     safe(function () {
         WA.room.area.onEnter("meeting").subscribe(function () {
             setZoneFlag("inMeeting", true);
-            if (meetAction && meetAction.remove) meetAction.remove();
-            meetAction = WA.ui.displayActionMessage({
-                message: "Meeting — SPACE for a room with screen share",
-                callback: function () {}
-            });
         });
         WA.room.area.onLeave("meeting").subscribe(function () {
             setZoneFlag("inMeeting", false);
-            if (meetAction && meetAction.remove) meetAction.remove();
-            meetAction = undefined;
         });
     });
 
     safe(function () {
         WA.ui.registerMenuCommand("Say something", {
             callback: function () { openModal("Say something", "./say.html"); }
+        });
+        WA.ui.registerMenuCommand("Today's agenda", {
+            callback: function () { openModal("Today's agenda", "./meeting.html"); }
         });
     });
 

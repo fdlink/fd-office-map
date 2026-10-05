@@ -285,7 +285,12 @@
 
   function promptFor(zone, extra) {
     extra = extra || {};
-    if (zone.kind === "desk") return "E — sit at " + zone.desk.name;
+    if (zone.kind === "desk") {
+      if (extra.occupant && extra.occupant.name) {
+        return "E — leave a note for " + extra.occupant.name;
+      }
+      return "E — sit at " + zone.desk.name;
+    }
     if (zone.kind === "door") return "E — close the day";
     if (zone.kind === "board") return "E — leave a note";
     if (zone.kind === "sill") return "E — look out";
@@ -293,7 +298,10 @@
       if (extra.cafeCount >= 2) return "Café — you are here with others. E leaves a napkin";
       return "Café — walk up to talk. E leaves a napkin";
     }
-    if (zone.kind === "meeting") return "Meeting — SPACE for a room with screen share";
+    if (zone.kind === "meeting") {
+      if (extra.meetCount >= 2) return "Meeting — you are here with others. E leaves an agenda";
+      return "Meeting — E leaves today's agenda";
+    }
     if (extra.nearby && extra.nearby.name) {
       return "E — say something to " + extra.nearby.name;
     }
@@ -455,6 +463,53 @@
     return { day: day || "", name: clipLine(from, 24), forWhom: who, text: line, kind: "gift" };
   }
 
+  /* Another person on the floor already claimed this desk. Leave a note
+     rather than sit in their chair. Self is skipped so you can update your card. */
+  function occupantOf(deskId, people, selfId) {
+    if (!deskId) return null;
+    people = people || [];
+    for (let i = 0; i < people.length; i++) {
+      const p = people[i];
+      if (!p || p.offFloor) continue;
+      if (selfId && p.id === selfId) continue;
+      if (p.claimedDesk !== deskId) continue;
+      return p;
+    }
+    return null;
+  }
+
+  function hourWash(hour) {
+    if (hour == null || hour === undefined) hour = new Date().getHours();
+    if (hour < 6 || hour >= 20) return { id: "night", fill: "rgba(12,22,48,0.32)" };
+    if (hour < 8) return { id: "dawn", fill: "rgba(232,140,80,0.14)" };
+    if (hour >= 17) return { id: "dusk", fill: "rgba(196,90,50,0.16)" };
+    return { id: "day", fill: "rgba(255,236,180,0.05)" };
+  }
+
+  function sillArt(surprise) {
+    const id = surprise && surprise.id ? surprise.id : "island";
+    return "sill-" + id + ".jpg";
+  }
+
+  function agendaLine(from, text, day) {
+    const line = clipLine(text, 80);
+    if (!line) return null;
+    return { day: day || "", name: clipLine(from, 24), text: line, kind: "agenda" };
+  }
+
+  function bindEnterSubmit(root) {
+    if (!root || (root.getAttribute && root.getAttribute("data-fd-enter"))) return;
+    if (root.setAttribute) root.setAttribute("data-fd-enter", "1");
+    root.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter") return;
+      const tag = event.target && event.target.tagName;
+      if (tag === "TEXTAREA") return;
+      event.preventDefault();
+      const btn = root.querySelector("button.primary, button.door");
+      if (btn) btn.click();
+    });
+  }
+
   function pixelFor(layout, col, row) {
     return { x: col * layout.tile, y: row * layout.tile };
   }
@@ -531,6 +586,11 @@
     bubbleAlive: bubbleAlive,
     plantScale: plantScale,
     publicCard: publicCard,
-    closeGift: closeGift
+    closeGift: closeGift,
+    occupantOf: occupantOf,
+    hourWash: hourWash,
+    sillArt: sillArt,
+    agendaLine: agendaLine,
+    bindEnterSubmit: bindEnterSubmit
   };
 });

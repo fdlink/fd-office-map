@@ -35,6 +35,7 @@
     function loadNotes() {
       try { return L.parseJsonSafe(WA.state.loadVariable("boardNotes"), []); } catch (e) { return []; }
     }
+    if (L.bindEnterSubmit) L.bindEnterSubmit(document.body);
     WA.onInit().then(function () {
       var st = WA.player.state;
       if (st.scene) document.getElementById("scene").value = st.scene;
@@ -72,6 +73,11 @@
       WA.player.state.saveVariable("hidden", hidden, { public: false, persist: true });
       WA.player.state.saveVariable("arrivedDay", L.todayKey(), { public: false, persist: true });
       WA.player.state.saveVariable("left", false, { public: true, persist: true });
+      var desk = "";
+      try { desk = WA.player.state.pendingDesk || ""; } catch (e) {}
+      if (desk) {
+        WA.player.state.saveVariable("claimedDesk", desk, { public: true, persist: true });
+      }
       WA.chat.sendChatMessage(hidden ? "sat down (hidden)" : ("sat down · " + scene + (onNow ? " · " + onNow : "")), "FD Office");
       WA.ui.modal.closeModal();
     };

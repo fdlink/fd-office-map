@@ -10,18 +10,22 @@
   <h1>FD Office — the floor</h1>
   <ol>
     <li>Walk to a desk. <strong>SPACE</strong> sits you down. Type what you are on. The desk mark is yours.</li>
+    <li>If someone is already in the chair, SPACE leaves them a note. The chair stays theirs.</li>
     <li>Walk up to someone in the Café — the camera opens when you are close. SPACE leaves a napkin.</li>
-    <li>Walk into Meeting. <strong>SPACE</strong> joins a room with screen share.</li>
+    <li>Walk into Meeting. <strong>SPACE</strong> joins a room with screen share. Menu: today’s agenda.</li>
     <li>The boards: left is notes you write, right is who is here.</li>
     <li>The sill at the light — <strong>SPACE</strong> looks out. The view changes with the day.</li>
     <li>Walk to the threshold. <strong>SPACE</strong> — one line about what shipped. That is the save.</li>
   </ol>
   <p>Hide is always allowed. Nothing appears above your head that you did not type. Presence is not productivity.</p>
-  <p>The menu has “Say something” if you want a line the floor can hear. Recording is not on this floor yet.</p>
+  <p>The menu has “Say something” and “Today’s agenda.” Enter submits a sheet. Recording is not on this floor yet.</p>
   <div class="row">
     <button type="button" class="primary" id="go">Got it — walk in</button>
   </div>
   <script>
+    document.body.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") document.getElementById("go").click();
+    });
     document.getElementById("go").onclick = function () {
       try {
         WA.player.state.saveVariable("seenHowTo", true, { public: false, persist: true });
