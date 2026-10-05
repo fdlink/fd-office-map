@@ -11,7 +11,7 @@
   "type": "map",
   "version": "1.10",
   "nextlayerid": 7,
-  "nextobjectid": 36,
+  "nextobjectid": 38,
   "properties": [
     {
       "name": "script",
@@ -2034,7 +2034,7 @@
           "properties": []
         },
         {
-          "id": 33,
+          "id": 31,
           "name": "sill",
           "type": "area",
           "class": "area",
@@ -2057,7 +2057,7 @@
       "name": "variables",
       "objects": [
         {
-          "id": 31,
+          "id": 32,
           "name": "gateA",
           "type": "variable",
           "class": "variable",
@@ -2084,7 +2084,7 @@
           ]
         },
         {
-          "id": 32,
+          "id": 33,
           "name": "boardNotes",
           "type": "variable",
           "class": "variable",
