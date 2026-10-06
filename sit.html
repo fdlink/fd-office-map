@@ -2,83 +2,116 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Sit down</title>
+  <title>Your desk</title>
   <link rel="stylesheet" href="panel.css">
   <script src="https://play.workadventu.re/iframe_api.js"></script>
   <script src="loop.js"></script>
 </head>
 <body>
-  <h1>Sit down</h1>
-  <p>Write what you are on. The scene is a mood; the sentence is yours.</p>
+  <h1>Your desk</h1>
+  <p>You sat down. Calendar, Slack, Notion, Drive live here. Pin a line only if you want the floor to see it.</p>
   <p id="gift" class="gift"></p>
-  <label>Desk mark</label>
-  <input id="plaque" maxlength="16" placeholder="this desk today (optional)">
-  <label>Scene</label>
-  <select id="scene">
-    <option value="deep">◇ Deep work</option>
-    <option value="fire">△ Firefighting</option>
-    <option value="calm" selected>○ Steady</option>
-    <option value="build">□ Building</option>
-  </select>
-  <label>On now</label>
-  <input id="onNow" maxlength="80" placeholder="e.g. FD Office Stage 0">
-  <label>Next</label>
-  <input id="next" maxlength="80" placeholder="optional">
-  <label><input type="checkbox" id="pubnext"> Show next on my desk</label>
+  <div class="desk-tabs" id="tabs">
+    <button type="button" class="on" data-tab="cal">Today</button>
+    <button type="button" data-tab="slack">Slack</button>
+    <button type="button" data-tab="notion">Notion</button>
+    <button type="button" data-tab="drive">Drive</button>
+  </div>
+  <div id="desk-body"></div>
+  <label>Pin a line (optional)</label>
+  <input id="onNow" maxlength="80" placeholder="only if you want others to see it">
   <label><input type="checkbox" id="hidden"> Hide status from others</label>
+  <div class="fx-row">
+    <button type="button" class="primary" id="dance">Dance</button>
+    <button type="button" class="ghost" id="toss">Toss a file</button>
+  </div>
   <div class="row">
-    <button type="button" class="ghost" id="cancel">Stay standing</button>
-    <button type="button" class="primary" id="sit">Sit</button>
+    <button type="button" class="ghost" id="stand">Stand up</button>
+    <button type="button" class="primary" id="keep">Keep working</button>
   </div>
   <script>
     var L = window.FdOfficeLoop;
+    var bodies = {
+      cal:
+        '<div class="desk-grid">' +
+        '<div class="desk-card"><span class="when">10:00</span><strong>1:1</strong><small>Demo — not your real calendar</small></div>' +
+        '<div class="desk-card"><span class="when">14:00</span><strong>Crew huddle</strong><small>Replace this standup with the floor</small></div>' +
+        '<div class="desk-card"><span class="when">16:30</span><strong>Focus block</strong><small>Yours when Google is connected</small></div>' +
+        '<p>Read-only calendar on this desk. Nothing here is written above your head.</p>' +
+        '<button type="button" class="ghost" id="connect">Connect Google Calendar (your account)</button>' +
+        "</div>",
+      slack:
+        '<div class="desk-grid">' +
+        '<div class="desk-card"><strong>#office</strong><small>Jun: the floor is up</small></div>' +
+        '<div class="desk-card"><strong>#10k-hp</strong><small>@you in a thread about today\'s close</small></div>' +
+        "<p>Demo mentions. They stay on your desk.</p>" +
+        '<button type="button" class="ghost" id="connect">Connect Slack (your workspace)</button>' +
+        "</div>",
+      notion:
+        '<div class="desk-grid">' +
+        '<div class="desk-card"><strong>FD Office loop</strong><small>Updated this morning</small></div>' +
+        '<div class="desk-card"><strong>Gate A notes</strong><small>Shared with the crew</small></div>' +
+        "<p>Demo pages. Connect pins your Notion, not ours.</p>" +
+        '<button type="button" class="ghost" id="connect">Connect Notion (your workspace)</button>' +
+        "</div>",
+      drive:
+        '<div class="desk-grid">' +
+        '<div class="desk-card"><strong>Q3 brief.gdoc</strong><small>Opened yesterday</small></div>' +
+        '<div class="desk-card"><strong>Floor plan.jpg</strong><small>In Shared drives</small></div>' +
+        "<p>Toss a file and the floor sees a paper airplane, not the filename.</p>" +
+        '<button type="button" class="ghost" id="connect">Connect Drive (your Google)</button>' +
+        "</div>"
+    };
+    function showTab(tab) {
+      Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function (el) {
+        el.classList.toggle("on", el.getAttribute("data-tab") === tab);
+      });
+      document.getElementById("desk-body").innerHTML = bodies[tab] || bodies.cal;
+      var c = document.getElementById("connect");
+      if (c) {
+        c.onclick = function () {
+          c.textContent = "Opens your workspace — yours, not ours.";
+          c.disabled = true;
+        };
+      }
+    }
+    document.getElementById("tabs").onclick = function (event) {
+      var btn = event.target.closest("[data-tab]");
+      if (btn) showTab(btn.getAttribute("data-tab"));
+    };
+    showTab("cal");
     function loadNotes() {
       try { return L.parseJsonSafe(WA.state.loadVariable("boardNotes"), []); } catch (e) { return []; }
     }
     if (L.bindEnterSubmit) L.bindEnterSubmit(document.body);
     WA.onInit().then(function () {
       var st = WA.player.state;
-      if (st.scene) document.getElementById("scene").value = st.scene;
       if (st.onNow) document.getElementById("onNow").value = st.onNow;
-      if (st.nextPrivate) document.getElementById("next").value = st.nextPrivate;
-      else if (st.next) document.getElementById("next").value = st.next;
-      if (st.plaque) document.getElementById("plaque").value = st.plaque;
-      document.getElementById("pubnext").checked = st.publishNext === true || st.publishNext === "true";
       document.getElementById("hidden").checked = st.hidden === true || st.hidden === "true";
       var mine = L.notesForYou(loadNotes(), WA.player.name || "");
       if (mine.length) {
         document.getElementById("gift").textContent = "On the board for you: " + mine[mine.length - 1].text;
       }
     });
-    document.getElementById("cancel").onclick = function () { WA.ui.modal.closeModal(); };
-    document.getElementById("sit").onclick = function () {
-      var onNow = L.clipLine(document.getElementById("onNow").value, 80);
+    document.getElementById("dance").onclick = function () {
+      WA.player.state.saveVariable("emote", "dance", { public: true, persist: false });
+      WA.chat.sendChatMessage((WA.player.name || "Someone") + " is dancing", "FD Office");
+    };
+    document.getElementById("toss").onclick = function () {
+      WA.player.state.saveVariable("toss", String(Date.now()), { public: true, persist: false });
+      WA.chat.sendChatMessage((WA.player.name || "Someone") + " tossed a file into the trash", "FD Office");
+    };
+    document.getElementById("stand").onclick = function () {
+      WA.player.state.saveVariable("claimedDesk", "", { public: true, persist: true });
+      WA.player.state.saveVariable("onNow", "", { public: true, persist: true });
+      WA.ui.modal.closeModal();
+    };
+    document.getElementById("keep").onclick = function () {
       var hidden = document.getElementById("hidden").checked;
-      var allowed = L.sitAllowed(WA.player.name || "You", onNow, hidden);
-      if (!allowed.ok) {
-        document.getElementById("onNow").focus();
-        return;
-      }
-      var scene = document.getElementById("scene").value;
-      var next = L.clipLine(document.getElementById("next").value, 80);
-      var plaque = L.clipLine(document.getElementById("plaque").value, 16);
-      var publishNext = document.getElementById("pubnext").checked;
-      var card = L.publicCard(hidden, scene, onNow, next, publishNext);
-      WA.player.state.saveVariable("scene", card.scene, { public: true, persist: true });
+      var onNow = L.clipLine(document.getElementById("onNow").value, 80);
+      var card = L.publicCard(hidden, WA.player.state.scene || "", onNow, "", false);
       WA.player.state.saveVariable("onNow", card.onNow, { public: true, persist: true });
-      WA.player.state.saveVariable("nextPrivate", next, { public: false, persist: true });
-      WA.player.state.saveVariable("next", card.next, { public: true, persist: true });
-      WA.player.state.saveVariable("publishNext", publishNext, { public: false, persist: true });
-      WA.player.state.saveVariable("plaque", plaque, { public: true, persist: true });
       WA.player.state.saveVariable("hidden", hidden, { public: false, persist: true });
-      WA.player.state.saveVariable("arrivedDay", L.todayKey(), { public: false, persist: true });
-      WA.player.state.saveVariable("left", false, { public: true, persist: true });
-      var desk = "";
-      try { desk = WA.player.state.pendingDesk || ""; } catch (e) {}
-      if (desk) {
-        WA.player.state.saveVariable("claimedDesk", desk, { public: true, persist: true });
-      }
-      WA.chat.sendChatMessage(hidden ? "sat down (hidden)" : ("sat down · " + scene + (onNow ? " · " + onNow : "")), "FD Office");
       WA.ui.modal.closeModal();
     };
   </script>

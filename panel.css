@@ -48,3 +48,18 @@ ul li { border-left: 3px solid #2c3650; padding-left: 10px; }
 ul li.gift { border-left-color: #e2b25c; }
 .foot { color: #8b95a8; font-size: 12px; margin-top: 16px; border-top: 1px solid #2c3650; padding-top: 10px; }
 img.sill { width: 100%; border-radius: 8px; margin: 8px 0; display: block; }
+.desk-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; }
+.desk-tabs button {
+  background: #0e1320; color: #e8ecf4; border: 1px solid #2c3650; border-radius: 8px;
+  padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px;
+}
+.desk-tabs button.on { border-color: #8aaaee; color: #8aaaee; }
+.desk-grid { display: grid; gap: 8px; }
+.desk-card {
+  background: #0e1320; border: 1px solid #2c3650; border-radius: 8px; padding: 10px 12px;
+}
+.desk-card strong { display: block; font-size: 13px; }
+.desk-card small { color: #8b95a8; font-size: 12px; }
+.desk-card .when { color: #8aaaee; font-variant-numeric: tabular-nums; margin-right: 8px; }
+.fx-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.desk-grid > button { width: auto; }

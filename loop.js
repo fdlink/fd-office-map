@@ -327,9 +327,8 @@
     }
   }
 
-  function sitAllowed(name, onNow, hidden) {
+  function sitAllowed(name) {
     if (!clipLine(name, 24)) return { ok: false, focus: "name" };
-    if (!hidden && !clipLine(onNow, 80)) return { ok: false, focus: "onNow" };
     return { ok: true };
   }
 

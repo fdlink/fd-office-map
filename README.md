@@ -28,7 +28,7 @@ WorkAdventure fetches the map cross-origin, so a plain static server without
 | `office-tiles.png` | 32px tileset |
 | `script.js` | SPACE to sit, close, pin, look out. Walking past a desk opens nothing. |
 | `loop.js` | Shared loop rules with the rehearsal (Gate A, notes, daily surprise). |
-| `sit.html` | Your card: desk mark, scene, on now, next (optional publish), hide |
+| `sit.html` | Connected desk: calendar / Slack / Notion / Drive, dance, toss |
 | `door.html` | One line about what shipped, optional line for someone |
 | `board.html` | Typed notes the floor can see (left board) |
 | `roster.html` | Who is on the floor (right board) and Gate A export |

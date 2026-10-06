@@ -226,6 +226,25 @@ function occupantOf(areaName) {
     return found;
 }
 
+function sitImmediately(areaName) {
+    var today = todayKey();
+    var name = WA.player.name || "You";
+    safe(function () {
+        WA.player.state.saveVariable("arrivedDay", today, { public: false, persist: true });
+        WA.player.state.saveVariable("claimedDesk", areaName, { public: true, persist: true });
+        WA.player.state.saveVariable("left", false, { public: true, persist: true });
+    });
+    recordGateA({
+        day: today,
+        name: name,
+        arrived: true,
+        closed: WA.player.state.closedDay === today,
+        closeLine: WA.player.state.closedDay === today ? (WA.player.state.closeLine || "") : ""
+    });
+    recordOpener(name);
+    say(name + " sat down");
+}
+
 function bindDesk(areaName) {
     var action;
     safe(function () {
@@ -234,7 +253,7 @@ function bindDesk(areaName) {
             var occ = occupantOf(areaName);
             var msg = occ
                 ? "SPACE — leave a note for " + (occ.name || "them")
-                : "SPACE — sit down (write what you are on)";
+                : "SPACE — sit down";
             action = WA.ui.displayActionMessage({
                 message: msg,
                 callback: function () {
@@ -248,7 +267,8 @@ function bindDesk(areaName) {
                         });
                         openModal("A note for " + (who.name || "them"), "./board.html");
                     } else {
-                        openModal("Sit down", "./sit.html");
+                        sitImmediately(areaName);
+                        openModal("Your desk", "./sit.html");
                     }
                 }
             });
@@ -331,6 +351,8 @@ WA.onInit().then(function () {
             if (evt.key === "onNow" && evt.value) say(who + " · on now: " + evt.value);
             if (evt.key === "closeLine" && evt.value) say(who + " closed · " + evt.value);
             if (evt.key === "say" && evt.value) say(who + ": " + evt.value);
+            if (evt.key === "emote" && evt.value === "dance") say(who + " is dancing");
+            if (evt.key === "toss" && evt.value) say(who + " tossed a file into the trash");
             if (evt.key === "inCafe" && (evt.value === true || evt.value === "true")) {
                 say(who + " is in the café");
             }
@@ -368,7 +390,7 @@ WA.onInit().then(function () {
         }
     });
 
-    say("FD Office — walk to a desk, SPACE to sit. The sill looks out. Left board is notes.");
+    say("FD Office — walk to a desk, SPACE sits you. The desk opens your tools.");
 
     safe(function () {
         if (!WA.player.state.seenHowTo) {
